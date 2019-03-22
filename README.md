@@ -16,16 +16,20 @@ wheel.js
 路由功能，配合节点独立渲染单页应用
 还提供许多基础小工具，方便日常开发
 
-快速使用方法：
+快速入门：
 
 ```
-<div>{{msg}}</div>
+<div wh-e:click="say">{{msg}}</div>
+<div wh-for="list:fruit:n">
+	{{n}}.{{fruit}}
+</div>
 
 wheel({
 	mode_src:"/mode/",//模块文件夹路径
 	mode:["format"],//引入模块
 	data:{
-		msg:"hello world"//数据存放
+		msg:"hello world",//数据存放
+		list:["apple","banana","pear"]
 	},
 	onLoad:function(){  
 		//初始化前
@@ -34,8 +38,8 @@ wheel({
 		//初始化完成
 	},
 	event:{//事件存放
-    		click:function(e,node){
-      			
+    		say:function(e,node){
+      			alert(node.data.msg);
     		}
 	},
 	app:[//路由存放
