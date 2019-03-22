@@ -25,7 +25,7 @@ wheel({
 	mode_src:"/mode/",//模块文件夹路径
 	mode:["format"],//引入模块
 	data:{
-    msg:"hello world"//数据存放
+		msg:"hello world"//数据存放
 	},
 	onLoad:function(){  
 		//初始化前
@@ -34,18 +34,17 @@ wheel({
 		//初始化完成
 	},
 	event:{//事件存放
-    click:function(e,node){
-      
-    }
+    		click:function(e,node){
+      			
+    		}
 	},
-  app:[//路由存放
-    {
-      url:"/tab1",//路径
-      controller:function(){//触发函数
+	app:[//路由存放
+    		{
+			url:"/tab1",//路径
+			controller:function(){//触发函数
         
-      }
-    }
-  ]
+		}
+ 	]
 	
 });
 ```
