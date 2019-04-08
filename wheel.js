@@ -21,7 +21,7 @@
  * 
  * 
  *
- *作者：jingqimao
+ *作者：陈海山
  *更新日期：2019/3/22
  *
  */
@@ -195,19 +195,29 @@ var WheelTool={
 		return res;
 	},
 	//深度克隆对象
-	clone:function(obj){ 
-		var str, newobj = obj.constructor === Array ? [] : {};
-	    if(typeof obj !== 'object'){
-	        return;
-	    } else if(window.JSON){
-	        str = JSON.stringify(obj);
-	        newobj = JSON.parse(str);
-	    } else {
-	        for(var i in obj){
-	            newobj[i] = typeof obj[i] === 'object' ? cloneObj(obj[i]) : obj[i]; 
+	clone:function(obj){
+		function isClass(o){
+            return Object.prototype.toString.call(o).slice(8,-1)
+        }
+		var result,oClass = isClass(obj);
+	    if(oClass==='Object'){
+	        result = {};
+	    }else if(oClass==='Array'){
+	        result = [];
+	    }else{
+	        return obj
+	    }
+	    if(oClass==='Object'){
+	        for(var key in obj){
+	            result[key]  = this.clone(obj[key]);
+	        }
+	    }else if(oClass==="Array"){
+	        for(var i=0;i<obj.length;i++){
+	             result.push(this.clone(obj[i]));
 	        }
 	    }
-	    return newobj;
+	
+	    return result
 	}
 };
 
@@ -242,6 +252,13 @@ var WheelMode={
 							        link.href = WheelMode.src+modeName[j]+".css";
 							        document.getElementsByTagName('head')[0].appendChild(link); 
 							        WheelMode.css[mload.mm[j]]=mload.mm[j];
+								}   
+								if(WheelMode.mode[mload.mm[j]].html!=undefined){
+									for(var k in WheelMode.mode[mload.mm[j]].html){  
+										var content=wt.get(WheelMode.mode[mload.mm[j]].html[k]);
+										content=content.replace(/\\n/g,"");
+										WheelMode.mode[mload.mm[j]].html[k]=content;
+									}
 								}
 								window[mload.mm[j]]=WheelMode.mode[mload.mm[j]];
 							}
@@ -254,6 +271,13 @@ var WheelMode={
 		initload:function(src,modeName,call){  
 			WheelMode.init(src);
 			WheelMode.load(modeName,call);
+		},
+		ready:function(){
+			for(var i in WheelMode.mode){
+				if(WheelMode.mode[i]!=undefined&&WheelMode.mode[i].onReady!=undefined&&typeof WheelMode.mode[i].onReady === "function"){
+					WheelMode.mode[i].onReady();
+				}
+			}
 		}
 };
 
@@ -276,6 +300,8 @@ function wheel(args){
 	args.bind=[];
 	//路由节点
 	args.routeNode=[];
+	//资源懒加载节点
+	args.wsrcNode=[];
 	
 	//动态执行语句并返回结果
 	args.runjs=function(jsstr,data){
@@ -404,6 +430,22 @@ function wheel(args){
 		}
 	};
 	
+	var reg_rp = /\{\{(.+?)\}\}/g; 
+	
+	//渲染文本
+	args.renderTXT=function(val,dd){
+		var m=val.match(reg_rp);  
+		if(m!=null){
+			for(var j in m){
+				var s=m[j].replace(/\{\{/g,'').replace(/\}\}/g,'');
+				var reg=m[j].replace(/\[/g,'\\\[').replace(/\]/g,'\\\]').replace(/\*/g,'\\\*').replace(/\+/g,'\\\+').replace(/\=/g,'\\\=').replace(/\?/g,'\\\?').replace(/\'/g,'\\\'').replace(/\"/g,'\\\"').replace(/\(/g,'\\\(').replace(/\)/g,'\\\)');   
+				val=val.replace(new RegExp(reg,"g"),args.runjs(s,dd)); 
+			}
+			return val;
+		}
+		return null;
+	}
+	
 	//节点渲染
 	args.render=function(node){
 		//节点数据集
@@ -413,9 +455,9 @@ function wheel(args){
 		//是否已经渲染子节点
 		var isRenderChilden=false;
 		
-		var reg_rp = /\{\{(.+?)\}\}/g; 
 		var reg_a = /wh-a:(.+?)/g;
 		var reg_e = /wh-e:(.+?)/g;
+		var reg_r = /wh-r:/g;
 		
 		//渲染模板
 		if(node.tag=="TMP"){
@@ -425,9 +467,9 @@ function wheel(args){
 				$(node.item).replaceWith(tmp_content);
 				tmp_content.each(function(i,item){
 					if(item.tagName!=undefined){
-						args.getNode(i,node,item,data);
+						args.getNode(i,node,item,data,node.root);
 					}else{
-						var val=renderTXT(item.nodeValue,data);
+						var val=args.renderTXT(item.nodeValue,data);
 						if(val!=null)item.nodeValue=val;
 					}
 				});
@@ -441,11 +483,13 @@ function wheel(args){
 			if(name=="wh-if")return 1;
 			if(name=="wh-route")return 2;
 			if(name=="wh-none")return 3;
-			if(name=="wh-for")return 4;
-			if(name.indexOf("wh-a")>-1)return 5;
-			if(name.indexOf("wh-e")>-1)return 6;
-			if(name=="wh-bind")return 7;
-			if(name=="wh-listen")return 8;
+			if(name.indexOf("wh-r")>-1)return 4;
+			if(name=="wh-for")return 5;
+			if(name.indexOf("wh-a")>-1)return 6;
+			if(name.indexOf("wh-e")>-1)return 7;
+			if(name=="wh-bind")return 8;
+			if(name=="wh-listen")return 9;
+			
 			
 		}
 		//标签渲染排序
@@ -466,7 +510,7 @@ function wheel(args){
 			//是否隐藏标签
 			if(!args.showTag)$(node.item).removeAttr(name); 
 			
-			if(name!="wh-none"&&name!="wh-route"&&(val==undefined||val=="")){
+			if(name!="wh-none"&&name!="wh-route"&&name.indexOf("wh-r")<0&&(val==undefined||val=="")){
 				console.error("Wheel标签错误："+name+"缺少参数",node.item);
 				return;
 			}
@@ -487,7 +531,7 @@ function wheel(args){
 					goRender=false;
 				}
 			}
-			//标签 忽略wh-none
+			//标签 忽略wh-route
 			if(name=="wh-route"){
 				var has=false;
 				for(var i in args.routeNode){
@@ -505,6 +549,44 @@ function wheel(args){
 				$(node.item).hide();
 				goRender=false;
 			}
+			//标签 懒加载
+			var m=name.match(reg_r);
+			if(m!=null){
+				if(!goRender)continue;
+				var name=name.replace("wh-r:",""); 
+				if(val!="")var val=args.runjs(val,data);
+				
+				var s_node=null;
+				if(name!=""){
+					s_node={
+						type:"inert",
+						attr:name,
+						val:val,
+						isLoad:false,
+						node:node
+					};
+				}else{
+					$(node.item).css("opacity","0");
+					isRenderChilden=true;
+					s_node={
+						type:"update",
+						attr:name,
+						val:val,
+						isLoad:false,
+						node:node
+					};
+				}
+				var has=false;
+				for(var i in args.wsrcNode){
+					if(args.wsrcNode[i]==s_node){
+						has=true;break;
+					}
+				}
+				if(!has){
+					args.wsrcNode.push(s_node);
+					args.wsrc.rol(s_node);
+				}
+			}
 			//标签 控制wh-for
 			if(name=="wh-for"){
 				if(!goRender)continue;
@@ -513,6 +595,7 @@ function wheel(args){
 				var fkx="key"; 
 				var ftx="item";
 				isRenderChilden=true;
+				
 				
 				if(val.indexOf(":")>-1){
 					var ss=val.split(":");
@@ -525,27 +608,78 @@ function wheel(args){
 				node.item.innerHTML="";
 				
 				var arr=args.runjs(val,data);
-				for(var j in arr){
-					if(arr instanceof Array&&['push','pop','shift','unshift','splice','sort','reverse'].indexOf(j)>-1)continue;
-					var item=$($.parseHTML(node.html));
-					var dd={};
-					dd[fnx]=n;
-					dd[fkx]=j;
-					dd[ftx]=arr[j]; 
-					for(var k in data){ 
-						dd[k]=data[k];
-					}
-					
-					$(node.item).append(item);
-					item.each(function(i,item){
-						if(item.tagName!=undefined){
-							args.getNode(i,node,item,dd);
-						}else{
-							var val=renderTXT(item.nodeValue,dd);
-							if(val!=null)item.nodeValue=val;
+				if(/^[0-9]*$/.test(arr)){
+					if(/^[0-9]*$/.test(ftx)){
+						var start=parseInt(arr);
+						var end=parseInt(ftx);
+						for(var j=start;j<end;j++){
+							var item=$($.parseHTML(node.html));
+							var dd={};
+							dd[fnx]=n;
+							dd[fkx]=j;
+							dd[ftx]=j; 
+							for(var k in data){ 
+								dd[k]=data[k];
+							}
+							
+							$(node.item).append(item);
+							item.each(function(i,item){
+								if(item.tagName!=undefined){
+									args.getNode(i,node,item,dd,node.root);
+								}else{
+									var val=args.renderTXT(item.nodeValue,dd);
+									if(val!=null)item.nodeValue=val;
+								}
+							});
+							n++;
 						}
-					});
-					n++;
+					}else{
+						var num=parseInt(arr);
+						for(var j=0;j<num;j++){
+							var item=$($.parseHTML(node.html));
+							var dd={};
+							dd[fnx]=n;
+							dd[fkx]=j;
+							dd[ftx]=j; 
+							for(var k in data){ 
+								dd[k]=data[k];
+							}
+							
+							$(node.item).append(item);
+							item.each(function(i,item){
+								if(item.tagName!=undefined){
+									args.getNode(i,node,item,dd,node.root);
+								}else{
+									var val=args.renderTXT(item.nodeValue,dd);
+									if(val!=null)item.nodeValue=val;
+								}
+							});
+							n++;
+						}
+					}
+				}else{
+					for(var j in arr){
+						if(arr instanceof Array&&['push','pop','shift','unshift','splice','sort','reverse'].indexOf(j)>-1)continue;
+						var item=$($.parseHTML(node.html));
+						var dd={};
+						dd[fnx]=n;
+						dd[fkx]=j;
+						dd[ftx]=arr[j]; 
+						for(var k in data){ 
+							dd[k]=data[k];
+						}
+						
+						$(node.item).append(item);
+						item.each(function(i,item){
+							if(item.tagName!=undefined){
+								args.getNode(i,node,item,dd,node.root);
+							}else{
+								var val=args.renderTXT(item.nodeValue,dd);
+								if(val!=null)item.nodeValue=val;
+							}
+						});
+						n++;
+					}
 				}
 			}
 			//标签 插入属性wh-a:
@@ -561,14 +695,14 @@ function wheel(args){
 			if(m!=null){
 				if(!goRender)continue;
 				node.item.wh_e_val=val;
-				if(args.event[val]!=undefined&&typeof args.event[val] === "function"){
+				if(node.root.event!=undefined&&node.root.event[val]!=undefined&&typeof node.root.event[val] === "function"){
 					var e_name=name.split(":")[1];
 					if(binds.indexOf(e_name)<0){
 						$(node.item).unbind(e_name);
 						binds.push(e_name);
 					}
 					$(node.item).bind(e_name,function(e){
-						args.event[this.wh_e_val](e,node);
+						node.root.event[this.wh_e_val](e,node,node.root);
 					});
 				}
 			}
@@ -601,7 +735,7 @@ function wheel(args){
 							});
 						}
 						if(node.item.type=="radio"){
-							var vl=renderTXT($(node.item).val(),data);
+							var vl=args.renderTXT($(node.item).val(),data);
 							var vv=args.runjs(val,data);
 							if(vl==vv){
 								$(node.item).attr('checked','true');
@@ -625,7 +759,7 @@ function wheel(args){
 							});
 						}
 						if(node.item.type=="checkbox"){
-							var vl=renderTXT($(node.item).val(),data); 
+							var vl=args.renderTXT($(node.item).val(),data); 
 							if(vl==null)vl=$(node.item).val();
 							if(node.item.wh_listen_data[node.item.wh_listen_val].indexOf(vl)>-1){
 								$(node.item).attr("checked",'true');
@@ -711,9 +845,9 @@ function wheel(args){
 					node.item.wh_listen_val=ld.key;
 					node.item.wh_listen_node=node;
 					
-					if(args.event[vx[1]]!=undefined){
+					if(node.event[vx[1]]!=undefined){
 						
-						var fun=args.event[vx[1]]();
+						var fun=node.event[vx[1]]();
 						node.item.wh_listen_fun=fun;
 						
 						if(fun!=undefined&&fun.set!=undefined&&fun.get!=undefined){
@@ -741,28 +875,14 @@ function wheel(args){
 			}
 		}
 		
-		//渲染文本
-		function renderTXT(val,dd){
-			var m=val.match(reg_rp);  
-			if(m!=null){
-				for(var j in m){
-					var s=m[j].replace(/\{\{/g,'').replace(/\}\}/g,'');
-					var reg=m[j].replace(/\[/g,'\\\[').replace(/\]/g,'\\\]').replace(/\*/g,'\\\*').replace(/\+/g,'\\\+').replace(/\=/g,'\\\=').replace(/\?/g,'\\\?').replace(/\'/g,'\\\'').replace(/\"/g,'\\\"').replace(/\(/g,'\\\(').replace(/\)/g,'\\\)');   
-					val=val.replace(new RegExp(reg,"g"),args.runjs(s,dd)); 
-				}
-				return val;
-			}
-			return null;
-		}
-		
 		
 		//属性渲染
 		for(var i in node.attr){
 			var name=node.attr[i].name;
 			var val=node.attr[i].val;
 			
-			val=renderTXT(val,data);
-			if(val!=null)$(node.item).attr(node.attr[i].name,val);  
+			val=args.renderTXT(val,data);
+			if(val!=null)$(node.item).attr(node.attr[i].name,val);
 		}
 		
 		if(!isRenderChilden&&goRender){
@@ -770,29 +890,32 @@ function wheel(args){
 			if(!node.hasChild){
 				if(node.html==undefined)return;
 				
-				var val=renderTXT(node.html,data);
+				var val=args.renderTXT(node.html,data);
 				if(val!=null)$(node.item).html(val); 
 				
 			//子节点渲染
 			}else if(!isRenderChilden){
-				var childs=node.item.childNodes;
-				childs.forEach(function(item,i){
-					if(item.tagName!=undefined){
-						args.getNode(i,node,item,data);
-					}else{
-						var val=renderTXT(item.nodeValue,data);
-						if(val!=null)item.nodeValue=val;
-					}
-				}); 
+				args.renderChilds(node,data);
 			}
 		}
 		
 		//首次渲染完成
 		node.hasInit=true;
 	};
-	
+	//渲染子节点
+	args.renderChilds=function(node,data){
+		var childs=node.item.childNodes;
+		childs.forEach(function(item,i){
+			if(item.tagName!=undefined){
+				args.getNode(i,node,item,data,node.root);
+			}else{
+				var val=args.renderTXT(item.nodeValue,data);
+				if(val!=null)item.nodeValue=val;
+			}
+		}); 
+	};
 	//初始化节点
-	args.getNode=function(no,parent,item,data){
+	args.getNode=function(no,parent,item,data,root){
 		if(item instanceof jQuery)item=item[0];
 		
 		//除去脚本和模板 
@@ -839,10 +962,11 @@ function wheel(args){
 				update:function(){
 					args.render(this);
 				},
-				hasInit:false
+				hasInit:false,
+				root:root!=undefined?root:args
 			};
 			if(parent!=null)parent.child.push(node);
-			var has=false;
+			var has=false; 
 			for(var i in args.node){
 				if(args.node[i].no==node.no){
 					has=true;
@@ -935,18 +1059,69 @@ function wheel(args){
 		}
 	};
 	
+	//滚动懒加载
+	args.wsrc={
+		init:function(){
+			$(window).on('scroll',function(){  
+				args.wsrc.rol();
+		    });
+		},
+		rol:function(s_node){
+			if(s_node!=undefined){
+				var item=s_node.node.item;
+				if (args.wsrc.checkShow($(item))&&!s_node.isLoad){
+	            	args.wsrc.load(s_node);
+	            }
+			}else{
+				for(var i in args.wsrcNode){
+					var s_node=args.wsrcNode[i];
+					var item=s_node.node.item;
+					if(item!=undefined&&item!=null){
+						if (args.wsrc.checkShow($(item))&&!s_node.isLoad){
+			            	args.wsrc.load(s_node);
+			            }
+					}
+		        };
+			}
+		},
+		checkShow:function(item){
+			var scrollTop = $(window).scrollTop(); 
+	        var windowHeight = $(window).height();
+	        var offsetTop = item.offset().top;
+
+	        if (offsetTop < (scrollTop + windowHeight) && offsetTop > scrollTop) {
+	            return true;
+	        }
+	        return false;
+		},
+		load:function(s_node){
+			s_node.isLoad=true;
+			if(s_node.type=="inert"){
+				$(s_node.node.item).attr(s_node.attr,s_node.val);
+			}
+			if(s_node.type=="update"){
+				$(s_node.node.item).css("opacity","");
+				args.renderChilds(s_node.node,s_node.node.data);
+			}
+		}
+	}
+	
 	//简化调用
 	window["wt"]=WheelTool;
 	window["wd"]=args.data;
 	window["wn"]=args.getNode;
 	window["wg"]=args.getNodeByID;
+	window["we"]=args.event;
+	window["wnn"]=function(item,data,root){
+		args.getNode(Math.random()*10,null,item,data,root);
+	};
 	
 	//加载模块化工具 
 	if(args.mode!=undefined&&args.mode.length>0){
 		if(args.mode_src!=undefined)WheelMode.init(args.mode_src);
 		WheelMode.load(args.mode,function(){
 			initWheel();
-		}); 
+		});
 	}else{
 		initWheel();
 	}
@@ -960,6 +1135,14 @@ function wheel(args){
 		args.getNode(0,null,$("body"),args.data);
 		WheelInitCss.remove();
 		args.initRoute();
+		args.wsrc.init();
+		
+		//模块等待页面加载完成
+		if(args.mode_src!=undefined){
+			$(function(){
+				WheelMode.ready();
+			});
+		}
 		
 		//准备完成
 		if(args.onReady!=undefined){  
