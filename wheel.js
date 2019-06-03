@@ -45,19 +45,50 @@ WheelInitLoading.css({
 });*/
 
 
+//兼容工具
+NodeList.prototype.forEach = Array.prototype.forEach;
+var Wheel_JR={
+		isIE:function(){
+			if(!!window.ActiveXObject || "ActiveXObject" in window){
+				return true;
+			}else{
+				return	false;
+			}
+		},
+		isIE11:function(){
+			if((/Trident\/7\./).test(navigator.userAgent)){
+				return true;
+			}else{
+				return false;
+			}
+		},
+		remove:function(_element){
+			if(this.isIE()||this.isIE11()){
+				var _parentElement = _element.parentNode;
+			    if(_parentElement){
+			        _parentElement.removeChild(_element);
+			    }
+			}else{
+				_element.remove();
+			}
+			
+		}
+}
+
+
 //小工具
 var WheelTool={
 	//请求服务
-	get:function(url,data){
+	get:function(url,data,isJson,isHtml){
 		//直接请求URL
 		if(typeof url == "string"){
 			if(data==undefined)data={};
 			var jq_res=$.ajax({url:url,data:data,async:false,type:"POST"});
 			var res=jq_res.responseText;
-			res=res.replace(/\n/g,"\\n");
 			if(jq_res.status!="200")res='{"code":'+jq_res.status+',"msg":"net error '+jq_res.status+'","data":"error"}';
 			if(res!=undefined){
-				//res=res.replace(/\\/g,"\\\\"); 
+				if(isJson!=undefined&&isJson==false)return res;
+				if(isHtml!=undefined&&isHtml==true)res=res.replace(/\r/g,"").replace(/\n/g,"<br>").replace(/\\/g,"\\\\");
 				if(WheelTool.isJSON(res)){
 					res=WheelTool.toJSON(res);
 					if(res.code!=undefined&&res.code==-1&&res.msg!=undefined)console.error("后台报错："+res.msg);
@@ -79,7 +110,8 @@ var WheelTool={
 					var res=jq_res.responseText;
 					if(jq_res.status!="200")res='{"code":'+jq_res.status+',"msg":"net error '+jq_res.status+'","data":"error"}';
 					if(res!=undefined){
-						//res=res.replace(/\\/g,"\\\\"); 
+						if(isJson!=undefined&&isJson==false)return res;
+						if(isHtml!=undefined&&isHtml==true)res=res.replace(/\r/g,"").replace(/\n/g,"<br>").replace(/\\/g,"\\\\");
 						if(WheelTool.isJSON(res)){
 							res=WheelTool.toJSON(res);
 							if(res.code!=undefined&&res.code==-1&&res.msg!=undefined)console.error("后台报错："+res.msg);
@@ -143,6 +175,35 @@ var WheelTool={
 		str=str.replace(/-/g,"/");
 		return new Date(str).getTime();
 	},
+	//格式化时间
+	fmTime:function(str,fm){
+		if(typeof str == 'string'){
+			str=str.replace(/-/g,"/");
+			return format(new Date(str),fm);
+		}else{
+			return format(new Date(str),fm);
+		}
+		function format(time,format){
+			var date = new Date(time);
+			var year = date.getFullYear(),
+				month = date.getMonth()+1,
+				day = date.getDate(),
+				hour = date.getHours(),
+				min = date.getMinutes(),
+				sec = date.getSeconds();
+			var preArr = Array.apply(null,Array(10)).map(function(elem, index) {
+				return '0'+index;
+			});
+			var newTime = format.replace(/yyyy/g,year)
+								.replace(/MM/g,preArr[month]||month)
+								.replace(/dd/g,preArr[day]||day)
+								.replace(/HH/g,preArr[hour]||hour)
+								.replace(/mm/g,preArr[min]||min)
+								.replace(/ss/g,preArr[sec]||sec);
+
+			return newTime;
+		}
+	},
 	//获取当前时间字符串
 	now:function(){
 		var date = new Date();
@@ -175,16 +236,22 @@ var WheelTool={
 		return para; 
 	},
 	//传参跳转页面
-	jump:function(url,para){ 
-		var has=false;
-		for(var i in para){
-			if(!has){
-				has=true;
-				url+="?";
+	jump:function(url,para){
+		if(para!=undefined){
+			var h=0;
+			for(var i in para){
+				if(h==0){
+					has++;
+					url+="?";
+				}
+				if(h==1){
+					has++;
+					url+=i+"="+para[i];
+				}else{
+					url+="&"+i+"="+para[i];
+				}
 			}
-			url+=i+"="+para[i]+"&";
 		}
-		url=url.substring(0,url.length-1);   
 		window.location.href=url; 
 	},
 	//根据正则表达式获取URL参数
@@ -218,6 +285,58 @@ var WheelTool={
 	    }
 	
 	    return result
+	},
+	//插入脚本
+	joinJS:function(src,call){
+		var script=document.createElement("script"); 
+		script.type="text/javascript";
+		script.src=src;
+		document.getElementsByTagName('head')[0].appendChild(script);
+		script.onload=script.onreadystatechange=function(){
+			if(call!=undefined)call();
+		}
+	},
+	//数组转字符串
+	arr2str:function(arr,sp,sl,sr){
+		var str="";
+		var ssp=sp!=undefined?sp:"";
+		var ssl=sl!=undefined?sl:"";
+		var ssr=sr!=undefined?sr:"";
+		for(var i in arr){
+			if(str.length==0){
+				str+=ssl+arr[i]+ssr;
+			}else{
+				str+=ssp+ssl+arr[i]+ssr;
+			}
+		}
+		return str;
+	},
+	//纵轴滚动聚焦
+	focus:function(item,speed){
+		var sd=speed||800;
+		var top=$(item).offset().top-50;
+		if(top<0)top=0;
+		$('html,body').animate({scrollTop:top}, sd);
+	},
+	//本地缓存
+	cache:function(key,val){
+		if(val!=undefined||val==null){
+			if(val!=null){
+				sessionStorage[key]=JSON.stringify(val);
+			}else{
+				delete sessionStorage[key];
+			}
+		}else{
+			if(sessionStorage[key]!=undefined&&sessionStorage[key]!=null){
+				return JSON.parse(sessionStorage[key]);
+			}else{
+				return null;
+			}
+		}
+	},
+	//文本转html
+	txt2html:function(txt){
+		return txt.replace(/\r\n/,"<br/>").replace(/\n/,"<br/>");
 	}
 };
 
@@ -314,13 +433,21 @@ function wheel(args){
 		for(var i in data){
 			if(i.indexOf(".")<0)head+="var "+i+"=item_.data."+i+";";
 		}
-		if(jsstr.indexOf(";")==-1){
-			jsstr=head+"(typeof("+jsstr+")!=\"undefined\")?item_.res="+jsstr+":null;";
+		if(jsstr.indexOf(";")<0){
+			jsstr=head+"(typeof("+jsstr+")!=\"undefined\")?item_.res=("+jsstr+"):null;";
 		}else{
 			jsstr=head+jsstr+"item_.res=null;";
 		}
 		function callAnotherFunc(fnFunction, vArgument) { 
 			fnFunction(vArgument);
+		}
+		function checkStr(str){
+			var regEn = /[`~!@#$%^&*()_+<>?:"{},.\/;'[\]]/im,regCn = /[·！#￥（——）：；“”‘、，|《。》？、【】[\]]/im;
+			if(regEn.test(str) || regCn.test(str)) {
+			    return false;
+			}else{
+				return true;
+			}
 		}
 		callAnotherFunc(new Function("item_", jsstr), item);
 		return item.res; 
@@ -328,6 +455,8 @@ function wheel(args){
 	
 	//处理取值链，返回最后键值
 	function getLastData(obj,key){
+		
+		var oobj=obj;
 		
 		var bValue=null;
 		var regex = /\[(.+?)\]/g;
@@ -337,7 +466,7 @@ function wheel(args){
 			var m=ss[i].match(regex);
 			if(m!=null){
 				obj=obj[ss[i].replace(m[0],"")];
-				obj=obj[m[0].replace("[","").replace("]","")];
+				obj=obj[args.runjs(m[0].replace("[","").replace("]",""),oobj)];
 			}else{
 				obj=obj[ss[i]];
 			}
@@ -346,6 +475,7 @@ function wheel(args){
 		if(m!=null){
 			obj=obj[ss[i].replace(m[0],"")];
 			key=m[0].replace("[","").replace("]","");
+			key=args.runjs(key,oobj);
 		}else{
 			key=ss[ss.length-1];
 		}
@@ -397,12 +527,12 @@ function wheel(args){
 					const arrayMethods = Object.create(arrayProto);
 					const newArrProto = [];
 					['push','pop','shift','unshift','splice','sort','reverse'
-					].forEach(method => {
+					].forEach(function(method) {
 						let original = arrayMethods[method];
 						newArrProto[method] = function mutator() {
 							var res=original.apply(this, arguments);
 							for(var i in bind_item.funs){
-								bind_item.funs[i](bValue);
+								bind_item.funs[i](bValue,method,res);
 							}
 							return res;
 						}
@@ -424,8 +554,8 @@ function wheel(args){
 					enumerable: true,
 					configurable: true
 				});
-			} catch (error) {
-				console.log("browser not supported.");
+			} catch (e) {
+				console.error("wh-bind报错:"+e);
 			}
 		}
 	};
@@ -448,6 +578,11 @@ function wheel(args){
 	
 	//节点渲染
 	args.render=function(node){
+		
+		if(node.item==null||node.item==undefined){
+			console.error("Wheel渲染报错：item节点不存在");
+			return;
+		}
 		//节点数据集
 		var data=node.data;
 		//清除，重新渲染
@@ -480,7 +615,7 @@ function wheel(args){
 		//标签顺序
 		function wh_val(name){
 			if(name=="wh-id")return 0;
-			if(name=="wh-if")return 1;
+			if(name=="wh-if"||name=="wh-if-rm")return 1;
 			if(name=="wh-route")return 2;
 			if(name=="wh-none")return 3;
 			if(name.indexOf("wh-r")>-1)return 4;
@@ -499,7 +634,7 @@ function wheel(args){
 		
 		//是否继续渲染
 		var goRender=true;
-		//所有绑定事件
+		//所有绑定事件,第一次渲染解绑和后续渲染不解绑
 		var binds=[];
 		
 		//标签渲染
@@ -523,11 +658,18 @@ function wheel(args){
 			}
 			//标签 控制wh-if
 			if(name=="wh-if"){
-				if(args.runjs(val,data)){     
+				if(args.runjs(val,data)){
 					$(node.item).show();
 				}else{
 					$(node.item).hide();
 					node.item.innerHTML="";
+					goRender=false;
+				}
+			}
+			//标签 控制wh-if-rm
+			if(name=="wh-if-rm"){
+				if(!args.runjs(val,data)){
+					Wheel_JR.remove(node.item);
 					goRender=false;
 				}
 			}
@@ -553,8 +695,11 @@ function wheel(args){
 			var m=name.match(reg_r);
 			if(m!=null){
 				if(!goRender)continue;
-				var name=name.replace("wh-r:",""); 
-				if(val!="")var val=args.runjs(val,data);
+				var name=name.replace("wh-r:","");
+				if(val!=""){
+					var _val=args.renderTXT(val,node.data);
+					if(_val!=null)val=_val;
+				}
 				
 				var s_node=null;
 				if(name!=""){
@@ -618,9 +763,7 @@ function wheel(args){
 							dd[fnx]=n;
 							dd[fkx]=j;
 							dd[ftx]=j; 
-							for(var k in data){ 
-								dd[k]=data[k];
-							}
+							dd["parent"]=data;
 							
 							$(node.item).append(item);
 							item.each(function(i,item){
@@ -641,9 +784,7 @@ function wheel(args){
 							dd[fnx]=n;
 							dd[fkx]=j;
 							dd[ftx]=j; 
-							for(var k in data){ 
-								dd[k]=data[k];
-							}
+							dd["parent"]=data;
 							
 							$(node.item).append(item);
 							item.each(function(i,item){
@@ -658,6 +799,7 @@ function wheel(args){
 						}
 					}
 				}else{
+					node.forList=[];
 					for(var j in arr){
 						if(arr instanceof Array&&['push','pop','shift','unshift','splice','sort','reverse'].indexOf(j)>-1)continue;
 						var item=$($.parseHTML(node.html));
@@ -665,17 +807,25 @@ function wheel(args){
 						dd[fnx]=n;
 						dd[fkx]=j;
 						dd[ftx]=arr[j]; 
-						for(var k in data){ 
-							dd[k]=data[k];
-						}
+						dd["parent"]=data;
+						
+						dd["_forData"]={};
+						dd["_forData"].fnx=fnx;
+						dd["_forData"].fkx=fkx;
+						dd["_forData"].ftx=ftx;
+						dd["_forData"][fkx]=j;
+						dd["_forData"]["arr"]=arr;
 						
 						$(node.item).append(item);
+						node.forList[j]=[];
 						item.each(function(i,item){
 							if(item.tagName!=undefined){
-								args.getNode(i,node,item,dd,node.root);
+								var rs=args.getNode(i,node,item,dd,node.root);
+								node.forList[j][i]=rs;
 							}else{
 								var val=args.renderTXT(item.nodeValue,dd);
 								if(val!=null)item.nodeValue=val;
+								node.forList[j][i]=item;
 							}
 						});
 						n++;
@@ -694,22 +844,73 @@ function wheel(args){
 			var m=name.match(reg_e);
 			if(m!=null){
 				if(!goRender)continue;
-				node.item.wh_e_val=val;
+				if(node.item.wh_es==undefined)node.item.wh_es=[];
 				if(node.root.event!=undefined&&node.root.event[val]!=undefined&&typeof node.root.event[val] === "function"){
 					var e_name=name.split(":")[1];
-					if(binds.indexOf(e_name)<0){
-						$(node.item).unbind(e_name);
-						binds.push(e_name);
+					if(e_name=="init"){//初始化事件
+						node.initEvent.push(val);
+					}else{//一般绑定事件
+						if(binds.indexOf(e_name)<0){
+							$(node.item).unbind(e_name);
+							binds.push(e_name);
+						}
+						node.item.wh_es[e_name]=val;
+						$(node.item).bind(e_name,function(e){
+							node.root.event[this.wh_es[e.type]](e,node,node.root);
+						});
 					}
-					$(node.item).bind(e_name,function(e){
-						node.root.event[this.wh_e_val](e,node,node.root);
-					});
 				}
 			}
 			//标签 数据绑定节点更新wh-bind
 			if(name=="wh-bind"){
-				if(!node.hasInit)args.setObj(data,val,function(v){
-					node.update();
+				if(!node.hasInit)args.setObj(data,val,function(v,arr_method,arr_res){
+					if(node.isForChild){
+						node.data[node.forData.ftx]=node.forData.arr[node.forData[node.forData.fkx]];
+						node.update();
+					}else{
+						var isBindFor=false;
+						for(var k in node.wh){
+							if(node.wh[k].name=="wh-for"&&node.forList!=undefined&&node.forList.length>0){
+								if(arr_method=="push"){
+									isBindFor=true;
+									var fnx="n"
+									var fkx="key"; 
+									var ftx="item";
+									var arr=args.runjs(node.wh[k].val,node.data);
+									var n=arr_res-1;
+									var j=n-1;
+									var item=$($.parseHTML(node.html));
+									var dd={};
+									dd[fnx]=n;
+									dd[fkx]=j;
+									dd[ftx]=arr[j]; 
+									dd["parent"]=node.data;
+									
+									dd["_forData"]={};
+									dd["_forData"].fnx=fnx;
+									dd["_forData"].fkx=fkx;
+									dd["_forData"].ftx=ftx;
+									dd["_forData"][fkx]=j;
+									dd["_forData"]["arr"]=arr;
+									
+									$(node.item).append(item);
+									node.forList[j]=[];
+									item.each(function(i,item){
+										if(item.tagName!=undefined){
+											var rs=args.getNode(i,node,item,dd,node.root);
+											node.forList[j][i]=rs;
+										}else{
+											var val=args.renderTXT(item.nodeValue,dd);
+											if(val!=null)item.nodeValue=val;
+											node.forList[j][i]=item;
+										}
+									});
+								}
+							}
+						}
+						if(!isBindFor)node.update();
+						//node.update();
+					}
 				});
 			}
 			//标签 控件绑定数据更新wh-listen
@@ -845,9 +1046,9 @@ function wheel(args){
 					node.item.wh_listen_val=ld.key;
 					node.item.wh_listen_node=node;
 					
-					if(node.event[vx[1]]!=undefined){
+					if(node.root.event!=undefined&&node.root.event[vx[1]]!=undefined&&typeof node.root.event[vx[1]] === "function"){
 						
-						var fun=node.event[vx[1]]();
+						var fun=node.root.event[vx[1]]();
 						node.item.wh_listen_fun=fun;
 						
 						if(fun!=undefined&&fun.set!=undefined&&fun.get!=undefined){
@@ -916,6 +1117,7 @@ function wheel(args){
 	};
 	//初始化节点
 	args.getNode=function(no,parent,item,data,root){
+		if(item==undefined){console.error("渲染节点报错：undefined");return;}
 		if(item instanceof jQuery)item=item[0];
 		
 		//除去脚本和模板 
@@ -954,7 +1156,7 @@ function wheel(args){
 				data:data,
 				attr:attr,
 				wh:wh,
-				html:$(item).html(),
+				html:$(item).html().replace(/<!--[\s\S]*?-->/g,''),
 				//outhtml:$(item).prop("outerHTML"),
 				hasWhTag:wh.length>0?true:false,
 				hasChild:($(item).children().length>0)?true:false,
@@ -963,8 +1165,15 @@ function wheel(args){
 					args.render(this);
 				},
 				hasInit:false,
-				root:root!=undefined?root:args
+				root:root!=undefined?root:args,
+				isForChild:data["_forData"]!=undefined?true:false,
+				set:[],
+				initEvent:[]
 			};
+			if(node.isForChild){
+				node.forData=data["_forData"],
+				delete data["_forData"];
+			}
 			if(parent!=null)parent.child.push(node);
 			var has=false; 
 			for(var i in args.node){
@@ -976,6 +1185,12 @@ function wheel(args){
 			}
 			if(!has)args.node.push(node);   
 			args.render(node);
+			if(node.initEvent.length>0){//渲染完成事件
+				for(var i in node.initEvent){
+					node.root.event[node.initEvent[i]](null,node,node.root);
+				}
+			}
+			return node;
 		} 
 	};
 	
@@ -1108,6 +1323,7 @@ function wheel(args){
 	
 	//简化调用
 	window["wt"]=WheelTool;
+	window["wa"]=args;
 	window["wd"]=args.data;
 	window["wn"]=args.getNode;
 	window["wg"]=args.getNodeByID;
@@ -1115,6 +1331,10 @@ function wheel(args){
 	window["wnn"]=function(item,data,root){
 		args.getNode(Math.random()*10,null,item,data,root);
 	};
+	window["wl"]=typeof(wl)!="undefined"?wl:{};
+	
+	//是否禁止渲染
+	args.isStop=args.isStop!=undefined?args.isStop:false;
 	
 	//加载模块化工具 
 	if(args.mode!=undefined&&args.mode.length>0){
@@ -1132,16 +1352,22 @@ function wheel(args){
 		if(args.onLoad!=undefined){  
 			args.onLoad();
 		}
-		args.getNode(0,null,$("body"),args.data);
-		WheelInitCss.remove();
-		args.initRoute();
-		args.wsrc.init();
 		
-		//模块等待页面加载完成
-		if(args.mode_src!=undefined){
-			$(function(){
-				WheelMode.ready();
-			});
+		//渲染
+		if(!args.isStop){
+			
+			args.getNode(0,null,$("body"),args.data);
+			//WheelInitCss.remove();
+			if(args.isLast==undefined||args.isLast==true)Wheel_JR.remove(WheelInitCss);
+			args.initRoute();
+			args.wsrc.init();
+			
+			//模块等待页面加载完成
+			if(args.mode_src!=undefined){
+				$(function(){
+					WheelMode.ready();
+				});
+			}
 		}
 		
 		//准备完成
