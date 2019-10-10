@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<dao db="test">
+
+
+
+	<!-- add/del/upd默认返回状态		add可返回键值	del和upd可返回更新数量 -->
+	<add name="addUser" tb="user" out="id:i">
+		<in arg="account:s"/>
+		<in arg="password:s"/>
+		<in arg="name:s"/>
+		<in arg="status:i"/>
+	</add>
+	<add name="addUser" tb="user" out="id:i">
+		<in arg="account:s"/>
+		<in arg="data:m"/>
+	</add>
+	
+	
+	<del name="delUser" tb="user">
+		<wh arg="id:i"/>
+	</del>
+	
+	
+	<upd name="updUser" tb="user">
+		<wh arg="id:i"/>
+		<in arg="account:s"/>
+		<in arg="name:s"/>
+		<in arg="status:i"/>
+	</upd>
+	<upd name="updUser" tb="user">
+		<wh arg="id:i"/>
+		<in arg="data:m"/>
+	</upd>
+	
+	
+	
+	
+	
+	<!-- sel默认返回listmap -->
+	<sel name="getUser" tb="user">
+		<wh arg="account:s"/>
+	</sel>
+	<sel name="getUser" tb="user" key="account,name">
+		<wh arg="account:s"/>
+	</sel>
+	<sel name="getUser" tb="user" out="map">
+		<wh arg="account:s"/>
+	</sel>
+	<sel name="getUser" tb="user" out="map" key="account,name">
+		<wh arg="account:s"/>
+	</sel>
+	<sel name="getAllUser" tb="user" out="page"/>
+	<sel name="getAllUser" tb="user" out="page">
+		<wh arg="account:s"/>
+	</sel>
+	<sel name="getAllUser" tb="user" out="page" key="account,name">
+		<wh arg="account:s"/>
+	</sel>
+	<sel name="getAllUser" tb="user" out="page" key="account,name">
+		<wh arg="account:s" type="like"/>
+	</sel>
+	<sel name="getAllUser" tb="user" out="page" key="account,name" rank="account">
+		<wh arg="account:s" type="like"/>
+	</sel>
+	<sel name="getAllUser" tb="user" out="page" key="account,name" rank="account" ache="3:1m">
+		<wh arg="account:s" type="like"/>
+	</sel>
+	
+	
+	<!-- exc默认返回状态	 检测头部:增可返回状态和key 删改只能返回状态  查可返回状态/数量/key/map/listmap/page 适应性缓存：M次输入和结果相等即加入缓存N长时间  无M则第一次结果直接加入缓存-->
+	<exc name="newUser">
+		<sql>instert into user(account,password) value({account},{password})</sql>
+		<in arg="account:s"/>
+		<in arg="password:s"/>
+	</exc>
+	<exc name="getUserById" out="count/key/map/listmap/page" ache="M:Ns/m/h/d">
+		<sql>select a.*,b.code from user a left join order b on a.id=b.id and id={id}</sql>
+		<in arg="id:i"/>
+	</exc>
+</dao>

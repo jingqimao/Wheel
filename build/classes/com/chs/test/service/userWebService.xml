@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<webservice name="com.chs.test.service.userService" url="http://localhost:8088/ws">
+	<method name="newUser">
+		<in arg="account:s"/>
+		<in arg="password:s"/>
+		<in arg="name:s"/>
+		<in arg="status:i"/>
+	</method>
+	<method name="getSomeUser" out="page">
+		<in arg="account:s"/>
+		<in arg="page:i"/>
+		<in arg="pageSize:i"/>
+	</method>
+</webservice>

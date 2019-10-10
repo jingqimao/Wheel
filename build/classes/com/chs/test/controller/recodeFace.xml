@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<face head="/recode">
+	<med head="/addrecode" dao="recodeDao" name="addrecode" out="i">
+		<in arg="tag:s"/>
+	</med>
+	<med head="/updrecode" dao="recodeDao" name="updrecode" out="b">
+		<in arg="id:i"/>
+		<in arg="tag:s"/>
+	</med>
+	<med head="/delrecode" dao="recodeDao" name="delrecode" out="b">
+		<in arg="id:i"/>
+	</med>
+	<med head="/selrecode" dao="recodeDao" name="selrecode" out="listmap">
+		<in arg="id:i"/>
+	</med>
+</face>
