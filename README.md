@@ -7,13 +7,13 @@ A Personal Developed Web Application Framework
 ## Wheel.jar 
 
 介绍：一个简便的MVC网络应用框架，包含核心部件和辅助开发工具。
-特点：
-1.分层明确
-2.支持服务缓存
-3.支持映射配置和权限配置
-4.支持多语言
-5.小工具丰富
-6.支持对接辅助工具PropellerSup进行可视化开发
+特点：  
+1.分层明确  
+2.支持服务缓存  
+3.支持映射配置和权限配置  
+4.支持多语言  
+5.小工具丰富  
+6.支持对接辅助工具PropellerSup进行可视化开发  
 
 ## wheel.js
 
