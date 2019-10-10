@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<dao db="test1">
+	<add name="addrecode" tb="recode" out="id:i">
+		<in arg="tag:s"/>
+	</add>
+	<upd name="updrecode" tb="recode">
+		<wh arg="id:i"/>
+		<in arg="tag:s"/>
+	</upd>
+	<del name="delrecode" tb="recode">
+		<wh arg="id:i"/>
+	</del>
+	<sel name="selrecode" tb="recode" out="listmap">
+		<wh arg="id:i"/>
+	</sel>
+</dao>

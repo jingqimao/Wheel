@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<dao db="test1">
+	<add name="addUser" tb="user" out="id:i">
+		<in arg="account:s"/>
+		<in arg="password:s"/>
+		<in arg="name:s"/>
+		<in arg="status:i"/>
+	</add>
+	<del name="delUser" tb="user" out="count:i">
+		<wh arg="id:i" eq="&lt;="/>
+	</del>
+	<upd name="updUser" tb="user">
+		<wh arg="id:i"/>
+		<in arg="account:s"/>
+		<in arg="name:s"/>
+		<in arg="status:i"/>
+	</upd>
+	
+	
+	<sel name="getUser" tb="user">
+		<wh arg="account:s"/>
+		<wh arg="name:s"/>
+	</sel>
+	<sel name="getAllUser" tb="user" out="page" key="account,name" rank="*">
+		<wh arg="account:s" eq="like"/>
+	</sel>
+	
+	
+	<exc name="newUser">
+		<sql>instert into user(account,password) value({account},{password})</sql>
+		<in arg="account:s"/>
+		<in arg="password:s"/>
+	</exc>
+	<exc name="getUserById" out="listmap">
+		<sql>select * from user where id={id}</sql>
+		<in arg="id:i"/>
+	</exc>
+</dao>
