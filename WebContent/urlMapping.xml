@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<root>
+	<mapping type="redirect">
+		<from>/</from>
+		<to>/home</to>
+	</mapping>
+	<mapping>
+		<from>/home</from>
+		<to>/view/def/index.jsp</to>
+	</mapping>
+
+	<mapping>
+		<from>/jump</from>
+		<to>/view/def/jump.jsp</to>
+	</mapping>
+
+	<mapping>
+		<from>/test</from>
+		<to>/view/def/test.jsp</to>
+	</mapping>
+	
+</root>

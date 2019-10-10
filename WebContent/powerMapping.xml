@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<root>
+	<mapping power="adminInfo">
+		<from>/admin/.*</from>
+		<to>/admin</to>
+		<def>/admin/login</def>
+	</mapping>
+</root>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+<root>
+	<!--  路径映射配置文件  -->
+	<conf name="urlMappingXml">urlMapping.xml</conf>
+	<!--  权限配置文件  -->
+	<conf name="powerMappingXml">powerMapping.xml</conf>
+	
+	
+	<!--  数据接口扫描包  -->
+	<conf name="daoPkg">com.chs.test.dao</conf>
+	
+	<!--  数据接口扫描包  -->
+	<conf name="servicePkg">com.chs.test.service</conf>
+	
+	<!--  控制器扫描包  -->
+	<conf name="controllerPkg">com.chs.test.controller</conf>
+	
+	<!--  分布式服务端口  -->
+	<conf name="servicePort">8088</conf>
+	
+</root>
