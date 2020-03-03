@@ -5,25 +5,39 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.chs.test.dao.userDao;
 import com.chs.test.dao.userDaoImp;
 import com.chs.wheel.core.DaoAOPHandle;
 import com.chs.wheel.utils.DBUtils;
 import com.chs.wheel.utils.IDUtils;
+import com.chs.wheel.utils.JSONUtils;
+import com.chs.wheel.utils.NETUtils;
+import com.chs.wheel.utils.NETUtils.NetClient;
 import com.chs.wheel.utils.SYSUtils;
+import com.chs.wheel.utils.TimerUtils;
 import com.chs.wheel.utils.XMLUtils;
 
 import ognl.Ognl;
 import ognl.OgnlException;
 
+import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class testing {
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		
 		/*// 设置默认工厂类
 		System.setProperty("org.apache.commons.logging.LogFactory", "org.apache.commons.logging.impl.LogFactoryImpl");
@@ -180,6 +194,132 @@ public class testing {
 				e.printStackTrace();
 			}
 		}*/
+		
+		
+		/*String h_url="https://www.tripadvisor.cn";
+		
+		NetClient client=new NetClient();
+		
+		String h_res=client.get(h_url);
+		
+		Pattern p = Pattern.compile("\"searchSessionId\":\"(.+?)\"");
+	    Matcher m = p.matcher(h_res);
+	    m.find();
+	    String searchSessionId=m.group(1);
+	    
+	    String d_url="https://www.tripadvisor.cn/TypeAheadJson?action=API"
+	    		+ "&query=Khao_Lak"
+	    		+ "&types=geo&name_depth=1"
+	    		+ "&details=true"
+	    		+ "&legacy_format=true"
+	    		+ "&rescue=true"
+	    		+ "&max=8"
+	    		+ "&uiOrigin=Home_geopicker"
+	    		+ "&source=Home_geopicker"
+	    		+ "&searchSessionId="+searchSessionId
+	    		+ "&startTime="+TimerUtils.getNow().getTime();
+		
+		String d_res=client.get(d_url);
+		
+		JSONArray d_list=JSONArray.parseArray(d_res);
+		JSONObject d_item=d_list.getJSONObject(0);
+	    
+		int des_id=d_item.getIntValue("value");
+		
+		String des_url="https://www.tripadvisor.cn/Home-g"+des_id;
+		
+		String des_res=client.get(des_url);
+		
+		Pattern pp = Pattern.compile("href=\"/Hotels-g"+des_id+"(.+?)\">");
+	    Matcher mm = pp.matcher(des_res);
+	    mm.find();
+	    
+	    String hotel_url="https://www.tripadvisor.cn/Hotels-g"+des_id+mm.group(1);
+	    
+		String hotel_res=client.get(hotel_url);
+	    
+	    Pattern p1 = Pattern.compile("\"pv_id\":\"(.+?)\"");
+	    Matcher m1 = p1.matcher(hotel_res);
+	    m1.find();
+	    String puid=m1.group(1);
+	    
+	    Pattern p2 = Pattern.compile("\\\\\"plSeed\\\\\":\\\\\"(.+?)\\\\\"");
+	    Matcher m2 = p2.matcher(hotel_res);
+	    m2.find();
+	    String plSeed=m2.group(1);
+	    
+	    Map<String,String> head=new HashMap<String,String>();
+	    
+	    head.put("Host", "www.tripadvisor.cn");
+	    head.put("Origin", "https://www.tripadvisor.cn");
+	    head.put("Referer", hotel_url);
+	    head.put("Sec-Fetch-Mode", "cors");
+	    head.put("Sec-Fetch-Site", "same-origin");
+	    head.put("X-Puid", puid);
+	    head.put("X-Requested-With", "XMLHttpRequest");
+	    
+	    
+	    Map<String,String> parm=new HashMap<String,String>();
+	    
+	    
+	    parm.put("plSeed", plSeed);
+	    parm.put("offset", "0");
+	    //parm.put("sl_opp_json", URLEncoder.encode("{}","UTF-8"));
+	    parm.put("sortOrder", "recommended");
+	    parm.put("reqNum", "1");
+	    parm.put("isLastPoll", "false");
+	    parm.put("paramSeqId", "1");
+	    parm.put("waitTime", "134");
+	    parm.put("changeSet", "MAIN_META,SORT_ORDER,PAGE_OFFSET");
+	    parm.put("puid", puid);
+	    
+		String res=client.post(hotel_url,parm,head);
+		
+		Document doc = Jsoup.parse(res);
+		
+		Elements list=doc.select(".listItem");
+		
+		for(Element item:list) {
+			
+			System.out.print(item.select("div[class='listing_title'] a").text());
+			System.out.print(item.select("div[class='price-wrap']").text());
+			System.out.println(item.select("span[class='provider_text']").text());
+		}*/
+	    
+		//https://www.tripadvisor.cn/data/graphql/batched
+		
+		/*String h_url="https://www.tripadvisor.cn/Hotels-g297914-Khao_Lak_Phang_Nga_Province-Hotels.html";
+		
+		NetClient client=new NetClient();
+		
+		String h_res=client.get(h_url);
+		
+		Document doc = Jsoup.parse(h_res);
+		
+		Elements list=doc.select(".listItem");
+		
+		for(Element item:list) {
+		    
+			System.out.print("\n"+item.select("div[class='listing_title'] a").text());
+			System.out.print(item.select("div[class='price-wrap']").text());
+			System.out.print(item.select("span[class='provider_text']").text());
+			
+			Pattern p = Pattern.compile("url\\(\"(.+?)\"\\)");
+		    Matcher m = p.matcher(item.select("li").get(0).select("div").get(0).attr("style"));
+		    if(m.find()) {
+		    	String cover=m.group(1);
+		    	System.out.print("---"+cover);
+		    }
+		}*/
+		
+		List<Map<String,Object>> res=new ArrayList<Map<String,Object>>();
+		Map<String,Object> m=new HashMap<String,Object>();
+		
+		m.put("onTimer", true);
+		
+		res.add(m);
+		
+		System.out.print(JSONUtils.toJsonString(res));
 	}
 	
 	

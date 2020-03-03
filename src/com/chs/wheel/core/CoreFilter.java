@@ -29,6 +29,8 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
 
+import com.chs.wheel.utils.IDUtils;
+
 /**
  * 
  * <p>CoreFilter</p>
@@ -57,17 +59,17 @@ public class CoreFilter implements Filter{
 				String pws=Wheel.powerMapping.get(k).get("power");
 				String[] pps=pws.split(",");
 				boolean op=false;
-				HttpSession session=((HttpServletRequest)request).getSession();
+				WheelSession session=getSession(request);
 				for(String ps:pps) {
 					if(ps.contains(".")) {
 						String[] px=ps.split("\\.");
-						if(session.getAttribute(px[0])==null||
-								((Map<String, ?>)session.getAttribute(px[0])).get(px[1])==null) {
+						if(session.getData(px[0])==null||
+								((Map<String, ?>)session.getData(px[0])).get(px[1])==null) {
 							op=true;
 							break;
 						}
 					}else {
-						if(session.getAttribute(ps)==null) {
+						if(session.getData(ps)==null) {
 							op=true;
 							break;
 						}
@@ -108,9 +110,9 @@ public class CoreFilter implements Filter{
 			((HttpServletResponse)response).setContentType("text/html; charset=UTF-8");  
 			
 			//切换语言路径
-			HttpSession session=((HttpServletRequest)request).getSession();
+			WheelSession session=getSession(request);
 			String lang=null;
-			if(session.getAttribute(Wheel.UserLanguage_Tag)!=null)lang=session.getAttribute(Wheel.UserLanguage_Tag).toString().toLowerCase();
+			if(session.getData(Wheel.UserLanguage_Tag)!=null)lang=session.getData(Wheel.UserLanguage_Tag).toString().toLowerCase();
 			if(rum.contains("/view/def/")&&lang!=null)rum=rum.replace("/view/def/", "/view/"+lang+"/");
 			
 			((HttpServletResponse)response).sendRedirect(rum); 
@@ -125,9 +127,9 @@ public class CoreFilter implements Filter{
 			((HttpServletResponse)response).setContentType("text/html; charset=UTF-8");  
 			
 			//切换语言路径
-			HttpSession session=((HttpServletRequest)request).getSession();
+			WheelSession session=getSession(request);
 			String lang=null;
-			if(session.getAttribute(Wheel.UserLanguage_Tag)!=null)lang=session.getAttribute(Wheel.UserLanguage_Tag).toString().toLowerCase();
+			if(session.getData(Wheel.UserLanguage_Tag)!=null)lang=session.getData(Wheel.UserLanguage_Tag).toString().toLowerCase();
 			if(fum.contains("/view/def/")&&lang!=null) {
 				fum=fum.replace("/view/def/", "/view/"+lang+"/");
 			}
@@ -319,15 +321,15 @@ public class CoreFilter implements Filter{
 	//添加语言标识
 	public String setLang(ServletRequest request,String url) {
 		
-		HttpSession session=((HttpServletRequest)request).getSession();
-		if(session.getAttribute(Wheel.UserLanguage_Tag)!=null) {
+		WheelSession session=getSession(request);
+		if(session.getData(Wheel.UserLanguage_Tag)!=null) {
 			if(url.split("/").length>2){
 				String head=url.split("/")[1];
 				if(!Wheel.languageTag.containsKey(head)) {
-					url="/"+session.getAttribute(Wheel.UserLanguage_Tag).toString().toLowerCase()+url;
+					url="/"+session.getData(Wheel.UserLanguage_Tag).toString().toLowerCase()+url;
 				}
 			}else {
-				url="/"+session.getAttribute(Wheel.UserLanguage_Tag).toString().toLowerCase()+url;
+				url="/"+session.getData(Wheel.UserLanguage_Tag).toString().toLowerCase()+url;
 			}
 		}
 		
@@ -339,23 +341,38 @@ public class CoreFilter implements Filter{
 	public String filterLang(ServletRequest request,String url) {
 		if(url.split("/").length>2){
 			String head=url.split("/")[1];
-			HttpSession session=((HttpServletRequest)request).getSession();
+			WheelSession session=getSession(request);
 			if(Wheel.languageTag.containsKey(head)){
-				if(session.getAttribute(Wheel.UserLanguage_Tag)==null) {
-						session.setAttribute(Wheel.UserLanguage_Tag, head.toUpperCase());
+				if(session.getData(Wheel.UserLanguage_Tag)==null) {
+						session.setData(Wheel.UserLanguage_Tag, head.toUpperCase());
 				}else {
-					if(!session.getAttribute(Wheel.UserLanguage_Tag).equals(head.toUpperCase())) {
-						session.setAttribute(Wheel.UserLanguage_Tag, head.toUpperCase());
+					if(!session.getData(Wheel.UserLanguage_Tag).equals(head.toUpperCase())) {
+						session.setData(Wheel.UserLanguage_Tag, head.toUpperCase());
 					}
 				}
 				url=url.replace("/"+head, "");
 			}
 			
 		}else {
-			HttpSession session=((HttpServletRequest)request).getSession();
-			if(session.getAttribute(Wheel.UserLanguage_Tag)!=null)session.setAttribute(Wheel.UserLanguage_Tag, null);
+			WheelSession session=getSession(request);
+			if(session.getData(Wheel.UserLanguage_Tag)!=null)session.setData(Wheel.UserLanguage_Tag, null);
 		}
 		
 		return url;
+	}
+	
+	//获取wheelSession
+	public static WheelSession getSession(ServletRequest request) {
+		String token=((HttpServletRequest)request).getHeader("token");
+		if(token!=null) {
+			if(token.isEmpty()) {
+				return Wheel.Session.getSession(IDUtils.getShortUuid());
+			}else {
+				return Wheel.Session.getSession(token);
+			}
+		}else {
+			return Wheel.Session.getSession(((HttpServletRequest)request).getSession().getId());
+		}
+		
 	}
 }

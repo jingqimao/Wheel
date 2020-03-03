@@ -51,7 +51,7 @@ public class ServiceAOPHandle implements InvocationHandler{
 			if(args!=null)for(Object arg:args) {
 				ar+=arg==null?"null":arg.toString();
 			}
-			String langTag=(String)BaseServiceImp.context.get().getSession().getAttribute(Wheel.UserLanguage_Tag);
+			String langTag=(String)BaseServiceImp.context.get().getSession().getData(Wheel.UserLanguage_Tag);
 			ak=o.getClass().getName()+"--"+method.getName()+(args!=null?"--"+MD5Utils.toString(ar):"")+(langTag!=null?"--"+langTag:"");
 			if(Wheel.acheService.get(ak)==null) {
 				Wheel.acheService.put(ak,new HashMap<String,Object>());

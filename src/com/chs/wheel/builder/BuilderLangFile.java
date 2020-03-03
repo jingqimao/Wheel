@@ -79,7 +79,7 @@ public class BuilderLangFile {
 			
 			@Override
 			public File doit(String path, String fileName, boolean isFile, File file) {
-				if(isFile&&(FileUtils.getType(fileName).equals("jsp")||FileUtils.getType(fileName).equals("js"))) {
+				if(isFile&&(FileUtils.getType(fileName).equals("jsp")||FileUtils.getType(fileName).equals("html")||FileUtils.getType(fileName).equals("js"))) {
 					String text=FileUtils.read(path, "utf-8");
 					
 					/*Pattern py=Pattern.compile(".*(\\+\\[[^\\]].*\\]).*");

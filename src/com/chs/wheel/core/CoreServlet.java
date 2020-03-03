@@ -97,7 +97,7 @@ public class CoreServlet extends HttpServlet{
 							//反射调用对应方法
 							Method met=(Method)controllerMapping.get(key).get("method");
 							BackHand backhand=new BackHand(request,response);
-							BaseServiceImp.context.set(new WheelContext(request.getSession(), backhand));
+							BaseServiceImp.context.set(new WheelContext(CoreFilter.getSession(request), backhand));
 							met.invoke(controllerMapping.get(key).get("class"),backhand);
 							
 						} catch (IllegalAccessException e) {
@@ -108,7 +108,17 @@ public class CoreServlet extends HttpServlet{
 							WheelLogger.get(this).error("error",e);
 							BackHand backhand=new BackHand(request,response);
 							try {
-								backhand.call(-1, e.getTargetException().toString(), "error");
+								String error_msg=e.getTargetException().toString();
+								String error_msg_callback="";
+								
+								if(error_msg.contains("null"))error_msg_callback+="请求参数为空;";
+								if(error_msg.contains("java.lang.NumberFormatException"))error_msg_callback+="数字参数格式化失败;";
+								
+								if(error_msg_callback.length()!=0) {
+									backhand.call(-1, error_msg_callback, "error");
+								}else {
+									backhand.call(-1, error_msg, "error");
+								}
 							} catch (IOException e1) {
 								WheelLogger.get(this).error("error",e1);
 							}
@@ -305,7 +315,7 @@ public class CoreServlet extends HttpServlet{
 	@Override
 	public void destroy() { 
 		
-		WheelEndpoint.stop(); 
+		if(WheelEndpoint!=null)WheelEndpoint.stop(); 
 		
 		//其他销毁
 		WheelInit.destroy(); 

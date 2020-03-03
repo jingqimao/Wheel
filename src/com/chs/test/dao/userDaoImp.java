@@ -110,7 +110,7 @@ public class userDaoImp implements userDao{
 	@Override
 	public Map<String, Object> getTT(Connection conn) throws Exception {
 		String sql="select name from tt where id=?";
-		String langTag=(String)BaseServiceImp.context.get().getSession().getAttribute(Wheel.UserLanguage_Tag);
+		String langTag=(String)BaseServiceImp.context.get().getSession().getData(Wheel.UserLanguage_Tag);
 		if(langTag!=null){
 			if("EN".equals(langTag))sql="select name_EN as 'name' from tt where id=?";
 			if("JP".equals(langTag))sql="select name_JP as 'name' from tt where id=?";
@@ -124,7 +124,7 @@ public class userDaoImp implements userDao{
 	@Override
 	public boolean setTT(Connection conn,String name) throws Exception {
 		String sql="update user set name = ? where id = "+1+"";
-		String langTag=(String)BaseServiceImp.context.get().getSession().getAttribute(Wheel.UserLanguage_Tag);
+		String langTag=(String)BaseServiceImp.context.get().getSession().getData(Wheel.UserLanguage_Tag);
 		if(langTag!=null){
 			if("EN".equals(langTag))sql="update user set name_EN = ? where id = "+1+"";
 			if("JP".equals(langTag))sql="update user set name_JP = ? where id = "+1+"";

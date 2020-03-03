@@ -26,6 +26,9 @@ public class Wheel {
 	//权限映射
 	public static final Map<String,Map<String,String>> powerMapping=new HashMap<String,Map<String,String>>();
 	
+	//自定义用户session
+	public static final CoreSession Session=new CoreSession();
+	
 	
 	//项目基础路径WebContent
 	public static final String ProjectPath=Wheel.class.getClassLoader().getResource("../../").getPath().toString();

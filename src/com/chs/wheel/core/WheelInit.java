@@ -39,7 +39,17 @@ public class WheelInit {
 				}
 			}
 		}, 2);
-		System.out.println("\nstart up ServiceAche cleaner!\n");
+		System.out.println("\nstart up ServiceAche cleaner!");
+		
+		//定时清理超时session
+		TimerUtils.TimeTask(10*60*1000, new Runnable() {
+			
+			@Override
+			public void run() {
+				Wheel.Session.clearOverTimeSession();
+			}
+		}, 2);
+		System.out.println("\nstart up Session cleaner!\n");
 		
 		//获取语言标识
 		List<File> fs=FileUtils.getFileByPath(Wheel.ProjectPath+"/view/_lang/", ".properties");

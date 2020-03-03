@@ -3,6 +3,7 @@ package com.chs.wheel.core;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 public class WheelContext {
@@ -12,13 +13,13 @@ public class WheelContext {
 	private final String session="session";
 	private final String backhand="backhand";
 	
-	public WheelContext(HttpSession session,BackHand backhand) {
+	public WheelContext(WheelSession session,BackHand backhand) {
 		ache.put(this.session, session);
 		ache.put(this.backhand, backhand);
 	}
 	
-	public HttpSession getSession() {
-		return (HttpSession)ache.get(session);
+	public WheelSession  getSession() {
+		return (WheelSession)ache.get(session);
 	}
 	
 	public BackHand getBackHand() {

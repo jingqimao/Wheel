@@ -389,10 +389,12 @@ public class NETUtils {
 		}
 		
 		public String get(String url) {
-			return post(url,null);
+			return post(url,null,null);
 		}
-		
 		public String post(String url,Map<String,String> parm) {
+			return post(url,parm,null);
+		}
+		public String post(String url,Map<String,String> parm,Map<String,String> head) {
 			
 			String res=null;
 			
@@ -405,7 +407,9 @@ public class NETUtils {
 					httpPost.setHeader("accept","*/*");
 					httpPost.setHeader("connection","Keep-Alive");
 					httpPost.setHeader("User-Agent","Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36");
-					
+					if(head!=null)for(String k:head.keySet()) {
+						httpPost.setHeader(k,head.get(k));
+					}
 					List<NameValuePair> parm_list=new ArrayList<NameValuePair>();
 					for(String k:parm.keySet()) {
 						parm_list.add(new BasicNameValuePair(k, parm.get(k)));
@@ -423,22 +427,14 @@ public class NETUtils {
 					httpResponse = httpClient.execute(httpGet);
 				}
 				
+				Thread.sleep(2000);
+				
 				HttpEntity resEntity = httpResponse.getEntity();
 				res=EntityUtils.toString(resEntity, "UTF-8").toString();
 				
 				EntityUtils.consume(resEntity);
 
 				httpResponse.close();
-				
-	            /*List<Cookie> cookies = cookieStore.getCookies();
-	            res="";
-	            for(int i=0;i<cookies.size();i++) {
-	            	if(res.length()==0) {
-	                	res+=cookies.get(i).getName()+"="+cookies.get(i).getValue();
-	                }else {
-	                	res+=";"+cookies.get(i).getName()+"="+cookies.get(i).getValue();
-	                }
-	            }*/
 				
 			} catch (Exception e) {
 				e.printStackTrace();

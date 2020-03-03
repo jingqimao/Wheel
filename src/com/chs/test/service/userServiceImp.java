@@ -2,12 +2,15 @@ package com.chs.test.service;
 
 import java.util.Map;
 
+import javax.swing.text.AbstractDocument.Content;
+
 import com.chs.test.dao.recodeDao;
 import com.chs.test.dao.userDao;
 import com.chs.wheel.core.Auto;
+import com.chs.wheel.core.BaseServiceImp;
 import com.chs.wheel.core.PageRes;
 
-public class userServiceImp implements userService{
+public class userServiceImp extends BaseServiceImp implements userService{
 	
 	@Auto
 	public userDao user_Dao;
@@ -56,4 +59,9 @@ public class userServiceImp implements userService{
 		throw new Exception("报错！！");
 	}
 	
+	@Override
+	public String test_token() throws Exception {
+		
+		return context.get().getSession().getSessionId();
+	}
 }

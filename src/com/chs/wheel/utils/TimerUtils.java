@@ -2,12 +2,15 @@ package com.chs.wheel.utils;
 
 import java.sql.Timestamp;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import org.quartz.CronExpression;
 
 public class TimerUtils {
 	
@@ -54,6 +57,35 @@ public class TimerUtils {
         return service;
 	}
 	
+	public static ScheduledExecutorService TimeTask(long wait,long space,Runnable action,int poolSize) {
+		
+        ScheduledExecutorService service = Executors.newScheduledThreadPool(poolSize);  
+        
+        service.scheduleAtFixedRate(action, wait, space, TimeUnit.MILLISECONDS);
+        
+        return service;
+	}
+	
+	public static ScheduledExecutorService TimeTask(String time,Runnable action,int poolSize) {
+		
+		try {
+			CronExpression ce = new CronExpression(time);
+			
+			Date nextDate=ce.getNextValidTimeAfter(new Date());
+			
+			ScheduledExecutorService service = Executors.newScheduledThreadPool(poolSize);  
+	        
+	        service.schedule(action, nextDate.getTime()-new Date().getTime(), TimeUnit.MILLISECONDS);
+	        
+	        return service;
+	        
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+        
+        return null;
+	}
+	
 	/**
 	 * 
 	 * <p>getNow</p>
@@ -69,6 +101,20 @@ public class TimerUtils {
 		Date dadate = new Date();
 		String nowDaDate = sdf.format(dadate);
 		return Timestamp.valueOf(nowDaDate);
+	}
+	
+	/**
+	 * 
+	 * <p>getNowTime</p>
+	 * Description: 获取当前时间毫秒数
+	 * 
+	 * @author chenhaishan
+	 * @date 2019-10-31 14:56
+	 *
+	 * @return
+	 */
+	public static long getNowTime() {
+		return new Date().getTime();
 	}
 	
 	/**

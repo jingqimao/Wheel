@@ -85,4 +85,10 @@ public class userController{
 		
 		backhand.output(userSer.test());
 	}
+	
+	@ControllerMapping(url = "/test_token")
+	public void test_token(BackHand backhand) throws Exception {
+		
+		backhand.output(userSer.test_token());
+	}
 }

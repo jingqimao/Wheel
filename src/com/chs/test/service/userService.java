@@ -18,4 +18,6 @@ public interface userService{
 	
 	public Map<String, Object> test() throws Exception;
 	
+	public String test_token() throws Exception;
+	
 }

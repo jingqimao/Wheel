@@ -23,7 +23,9 @@ public class JSONUtils {
 		for(String k:map.keySet()) {
 			Object obj=map.get(k);
 			if(block)res.append("	");
-			if(obj instanceof String) {
+			if(obj instanceof Boolean) {
+				res.append("\""+k+"\":"+obj.toString()+",");
+			}else if(obj instanceof String) {
 				res.append("\""+k+"\":\""+obj.toString().replaceAll("\"", "\\\\\"")+"\",");
 			}else if(obj instanceof Integer||obj instanceof Long||obj instanceof Float||obj instanceof Double) {
 				res.append("\""+k+"\":"+obj+",");
@@ -62,7 +64,9 @@ public class JSONUtils {
 		if(block)res.append("\r\n");
 		for(Object obj:list) {
 			if(block)res.append("	");
-			if(obj instanceof String) {
+			if(obj instanceof Boolean) {
+				res.append(obj.toString()+",");
+			}else if(obj instanceof String) {
 				res.append("\""+obj.toString().replaceAll("\"", "\\\\\"")+"\",");
 			}else if(obj instanceof Integer||obj instanceof Long||obj instanceof Float||obj instanceof Double) {
 				res.append(obj+",");

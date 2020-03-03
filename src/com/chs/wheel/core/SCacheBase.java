@@ -44,15 +44,15 @@ public class SCacheBase {
 		String setlist="";
 		for(String k:skey.keySet()){
 			if(keylist.length()==0) {
-				keylist+=k;
-				setlist+=k+"=?";
+				keylist+="`"+k+"`";
+				setlist+="`"+k+"`"+"=?";
 			}else {
-				keylist+=","+k;
-				setlist+=","+k+"=?";
+				keylist+=","+"`"+k+"`";
+				setlist+=","+"`"+k+"`"+"=?";
 			}
 		}
-		this.getsql="select "+keylist+" from "+this.table+" where "+this.mkey.split("#")[0]+" = ?";
-		this.setsql="update "+this.table+" set "+setlist+" where "+this.mkey.split("#")[0]+" = ?";
+		this.getsql="select "+keylist+" from "+"`"+this.table+"`"+" where "+"`"+this.mkey.split("#")[0]+"`"+" = ?";
+		this.setsql="update "+this.table+" set "+setlist+" where "+"`"+this.mkey.split("#")[0]+"`"+" = ?";
 		
 		TimerUtils.TimeTask(TimerUtils.getTimeSize(checkTime), new Runnable() {
 			
@@ -75,7 +75,6 @@ public class SCacheBase {
 	 *
 	 */
 	protected void _OVER(){
-		
 		Connection conn=null;
 		
 		for(Object key:Cache.keySet()) {
@@ -86,7 +85,6 @@ public class SCacheBase {
 							conn=DBUtils.getConnection(db);
 							conn.setAutoCommit(false);
 						}
-						
 						PreparedStatement ps=conn.prepareStatement(setsql,Statement.RETURN_GENERATED_KEYS);
 						int n=1;
 						Map<String,Object> item=Cache.get(key).data;
